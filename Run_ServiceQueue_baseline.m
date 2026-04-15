@@ -83,6 +83,8 @@ NumInSystemSamples = cellfun( ...
 NumInSystem = vertcat(NumInSystemSamples{:});
 
 NumWaiting = vertcat(NumWaitingSamples{:});
+
+
 %[text] MATLAB-ism: When you pull multiple items from a cell array, the result is a "comma-separated list" rather than some kind of array.  Thus, the above means
 %[text] `NumInSystem = vertcat(NumInSystemSamples{1}, NumInSystemSamples{2}, ...)`
 %[text] which concatenates all the columns of numbers in NumInSystemSamples into one long column.
@@ -112,7 +114,7 @@ ylabel(ax, "Probability");
 legend(ax, "simulation", "theory");
 %[text] Set ranges on the axes. MATLAB's plotting functions do this automatically, but when you need to compare two sets of data, it's a good idea to use the same ranges on the two pictures.  To start, you can let MATLAB choose the ranges automatically, and just know that it might choose very different ranges for different sets of data.  Once you're certain the picture content is correct, choose an x range and a y range that gives good results for all sets of data.  The final choice of ranges is a matter of some trial and error.  You generally have to do these commands *after* calling `plot` and `histogram`.
 %[text] This sets the vertical axis to go from $0$ to $0.2$.
-ylim(ax, [0, 0.2]);
+ylim(ax, [0, 0.4]);
 %[text] This sets the horizontal axis to go from $-1$ to $21$.  The histogram will use bins $(-0.5, 0.5), (0.5, 1.5), \\dots$ so this leaves some visual breathing room on the left.
 xlim(ax, [-1, 21]);
 %[text] MATLAB-ism: You have to wait a couple of seconds for those settings to take effect or `exportgraphics` will screw up the margins.
@@ -120,6 +122,22 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.svg");
+%%
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+h = histogram(ax, NumWaiting, Normalization="probability", BinMethod="integers");
+title(ax, "Number of customers waiting");
+xlabel(ax, "Count");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+ylim(ax, [0, 1.0]);
+xlim(ax, [-1, 20]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
 %[text] ## Collect measurements of how long customers spend in the system
 %[text] This is a rather different calculation because instead of looking at log entries for each sample `ServiceQueue`, we'll look at the list of served  customers in each sample `ServiceQueue`.
@@ -183,7 +201,23 @@ xlabel(ax, "Time");
 ylabel(ax, "Probability");
 %[text] Set ranges on the axes.
 ylim(ax, [0, 0.2]);
-xlim(ax, [0, 2.0]);
+xlim(ax, [0, 10]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
+%%
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+h = histogram(ax, TimeWaiting, Normalization="probability", BinWidth=5/60);
+title(ax, "Time spent waiting");
+xlabel(ax, "Time");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+ylim(ax, [0, 1.0]);
+xlim(ax, [0, 10]);
 %[text] Wait for MATLAB to catch up.
 pause(2);
 %[text] Save the picture.
