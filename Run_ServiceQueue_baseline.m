@@ -224,8 +224,8 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf"); %[output:0b5b8701]
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg"); %[output:0b5b8701]
 %[text] Part 2:
-%[text] 1\) 
-%[text] 3\) The theory computations are $L=2$, $L\_q=\\frac{4}{3}$, $W=1$, and $W\_q=\\frac{2}{3}$. The theoretical values are $L=1.697$, $L\_q=1.085$, $W=0.732$, and $W\_q=0.419$.
+%[text] 1\) In hours, we get $P\_0=\\frac{1}{3}$, $P\_1=\\frac{2}{9}$, $P\_2=\\frac{4}{27}$, $P\_3=\\frac{8}{81}$, $P\_4=\\frac{16}{243}$, and $P\_5=\\frac{32}{729}$. In minutes, we get $P\_0=20$, $P\_1=13.3$, $P\_2=8.9$, $P\_3=5.93$, $P\_4=3.95$, and $P\_5=2.63$. The theory computations in hours are $L=2$, $L\_q=\\frac{4}{3}$, $W=1$, and $W\_q=\\frac{2}{3}$. The theory computations in minutes are $L=120$, $L\_q=80$, $W=60$, and $W\_q=40$.
+%[text] 3\) The simulation values in hours are $L=1.697$, $L\_q=1.085$, $W=0.732$, and $W\_q=0.419$. These values are pretty close to the theoretical numbers.
 
 %[appendix]{"version":"1.0"}
 %---
