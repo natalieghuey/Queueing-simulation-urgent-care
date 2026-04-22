@@ -1,23 +1,23 @@
-%[text] # Run samples of the UrgentCare simulation
+%[text] # Chucktown UrgentCare Simulation
 %[text] Savannah Jellings and Natalie Huey
 %[text] April 22nd 2026
-%[text] Collect statistics and plot histograms along the way.
+%[text] The following block of code collects statistics and plot histograms along the way.
 PictureFolder = "Pictures";
 mkdir(PictureFolder);
 %%
 %[text] ## Set up
 %[text] We'll measure time in hours
-%[text] Arrival rate: 2 per hour
+%[text] #### Patient arrival rate: 2 per hour
 lambda = 2;
-%[text] Departure (service) rate: 1 per 20 minutes, so 3 per hour
+%[text] #### Departure (service/treatment) rate: 1 patient per 20 minutes, so 3 patients per hour
 mu = 3;
-%[text] Number of doctors:
+%[text] #### Number of doctors:
 s = 1;
-%[text] Run many samples of the queue.
+%[text] Run many samples of the queue:
 NumSamples = 20;
-%[text] Each sample is run up to a maximum time.
+%[text] Each sample is run up to a maximum time, in our case, each shift is 8 hours:
 MaxTime = 8;
-%[text] Make a log entry every so often
+%[text] Make a log entry every so often (one a minute): 
 LogInterval = 1/60;
 %%
 %[text] ## Numbers from theory for M/M/1 queue
@@ -58,6 +58,7 @@ end
 %[text] ## Collect measurements of how many customers are in the system
 %[text] Count how many customers are in the system at each log entry for each sample run.  There are two ways to do this.  You only have to do one of them.
 %[text] ### Option one: Use a for loop.
+%[text] #### Compute simulation $L$ (patients in the system):
 NumInSystemSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
@@ -67,20 +68,18 @@ for SampleNum = 1:NumSamples
     % columns like this.
     NumInSystemSamples{SampleNum} = q.Log.NumWaiting + q.Log.NumInService;
 end
-
-% Compute simulation L_q
+%[text] #### Compute simulation $L\_q$ (expected number of patients waiting):
 NumWaitingSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
     NumWaitingSamples{SampleNum} = q.Log.NumWaiting;
 end
-
+%[text] #### Compute the count of patients served per shift:
 CountServed = cell([NumSamples,1]);
 for SampleNum = 1:NumSamples
     q= QSamples{SampleNum};
     CountServed{SampleNum} = numel(q.Served);
 end
-    
 %[text] ### Option two: Map a function over the cell array of ServiceQueue objects.
 %[text] The `@(q) ...` expression is shorthand for a function that takes a `ServiceQueue` as input, names it `q`, and computes the sum of two columns from its log.  The `cellfun` function applies that function to each item in `QSamples`. The option `UniformOutput=false` tells `cellfun` to produce a cell array rather than a numerical array.
 NumInSystemSamples = cellfun( ...
@@ -100,7 +99,7 @@ CountServed2 = vertcat(CountServed{:});
 %[text] This is roughly equivalent to "splatting" in Python, which looks like `f(*args)`.
 %%
 %[text] ## Pictures and stats for number of customers in system
-%[text] Print out mean number of customers in the system.
+%[text] #### Print out mean number of patients in the system and mean number of patients waiting: 
 meanNumInSystem = mean(NumInSystem);
 fprintf("Mean number in system: %f\n", meanNumInSystem);
 
@@ -113,6 +112,7 @@ ax = nexttile(t);
 %[text] MATLAB-ism: Once you've created a picture, you can use `hold` to cause further plotting functions to work with the same picture rather than create a new one.
 hold(ax, "on");
 %[text] Start with a histogram.  The result is an empirical PDF, that is, the area of the bar at horizontal index n is proportional to the fraction of samples for which there were n customers in the system.  The data for this histogram is counts of customers, which must all be whole numbers.  The option `BinMethod="integers"` means to use bins $(-0.5, 0.5), (0.5, 1.5), \\dots$ so that the height of the first bar is proportional to the count of 0s in the data, the height of the second bar is proportional to the count of 1s, etc. MATLAB can choose bins automatically, but since we know the data consists of whole numbers, it makes sense to specify this option so we get consistent results.
+%[text] ## Histogram of Count of Patients in the System:
 h = histogram(ax, NumInSystem, Normalization="probability", BinMethod="integers");
 %[text] Plot $(0, P\_0), (1, P\_1), \\dots$.  If all goes well, these dots should land close to the tops of the bars of the histogram.
 plot(ax, 0:nMax, P, 'o', MarkerEdgeColor='k', MarkerFaceColor='r');
@@ -132,6 +132,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.svg");
 %%
+%[text] ## Histogram of the count of patients waiting:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -148,6 +149,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram of count of patients served per shift:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -167,6 +169,7 @@ exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %[text] ## Collect measurements of how long customers spend in the system
 %[text] This is a rather different calculation because instead of looking at log entries for each sample `ServiceQueue`, we'll look at the list of served  customers in each sample `ServiceQueue`.
 %[text] ### Option one: Use a for loop.
+%[text] #### Compute $W$ (Time patients spend in the system): 
 TimeInSystemSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
@@ -188,8 +191,7 @@ for SampleNum = 1:NumSamples
     TimeInSystemSamples{SampleNum} = ...
         cellfun(@(c) c.DepartureTime - c.ArrivalTime, q.Served');
 end
-
-
+%[text] #### Compute $W\_q$ (time patients spend waiting):
 % Compute simulation W_q
 TimeWaitingSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
@@ -206,7 +208,7 @@ TimeInSystemSamples = cellfun( ...
 TimeInSystem = vertcat(TimeInSystemSamples{:});
 
 TimeWaiting = vertcat(TimeWaitingSamples{:});
-
+%[text] #### Calculate the time that customers are being served for (total time in system - time spent waiting):
 TimeServed = TimeInSystem - TimeWaiting;
 %%
 %[text] ## Pictures and stats for time customers spend in the system
@@ -221,6 +223,7 @@ fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
 %[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+%[text] ## Histogram for time patients spend in the system:
 h = histogram(ax, TimeInSystem, Normalization="probability", BinWidth=5/60);
 %[text] Add titles and labels and such.
 title(ax, "Time in the system");
@@ -235,6 +238,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram for time patients spend waiting in the queue: 
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -251,6 +255,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram for time patients spend being served:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -267,9 +272,11 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
-%[text] Part 2:
-%[text] 1\) From theory we compute the probabilities $P\_0=\\frac{1}{3}$, $P\_1=\\frac{2}{9}$, $P\_2=\\frac{4}{27}$, $P\_3=\\frac{8}{81}$, $P\_4=\\frac{16}{243}$, and $P\_5=\\frac{32}{729}$. The theory computations are $L=2$, $L\_q=\\frac{4}{3}$. From theory in hours we get $W=1$ and $W\_q=\\frac{2}{3}$. The theory computations in minutes are $W=60$ and $W\_q=40$.
-%[text] 3\) The simulation values are $L=1.697$, $L\_q=1.085$ and $W=0.732$, $W\_q=0.419$ in hours. These values are pretty close to the theoretical numbers.
+%[text] # Part 2:
+%[text] **1)** From theory we compute the probabilities $P\_0=\\frac{1}{3}$, $P\_1=\\frac{2}{9}$, $P\_2=\\frac{4}{27}$, $P\_3=\\frac{8}{81}$, $P\_4=\\frac{16}{243}$, and $P\_5=\\frac{32}{729}$. 
+%[text] The theory computations are $L=2$, $L\_q=\\frac{4}{3}$.
+%[text]  From theory in hours we get $W=1$ and $W\_q=\\frac{2}{3}$. The theory computations in minutes are $W=60$ and $W\_q=40$.
+%[text] **3)** The simulation values are $L=1.697$, $L\_q=1.085$ and $W=0.732$, $W\_q=0.419$ in hours. These values are pretty close to the theoretical numbers, all come out to be a little bit lower than the theory. 
 
 %[appendix]{"version":"1.0"}
 %---
