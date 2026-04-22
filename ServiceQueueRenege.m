@@ -100,7 +100,7 @@ classdef ServiceQueueRenege < handle
 
     methods
 
-        function obj = ServiceQueue(KWArgs)
+        function obj = ServiceQueueRenege(KWArgs)
             % ServiceQueue Constructor. Public properties can be specified
             % as named arguments.
 
@@ -110,7 +110,7 @@ classdef ServiceQueueRenege < handle
             arguments
                 % Special syntax declaring that the allowed named arguments
                 % should match the public properties of class ServiceQueue.
-                KWArgs.?ServiceQueue;
+                KWArgs.?ServiceQueueRenege;
             end
 
             % Since this method is a constructor, the obj output variable
