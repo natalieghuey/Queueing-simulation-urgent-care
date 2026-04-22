@@ -102,7 +102,6 @@ CountServed2 = vertcat(CountServed{:});
 %[text] #### Print out mean number of patients in the system and mean number of patients waiting: 
 meanNumInSystem = mean(NumInSystem);
 fprintf("Mean number in system: %f\n", meanNumInSystem);
-
 meanNumWaiting = mean(NumWaiting);
 fprintf("Mean number waiting: %f\n", meanNumWaiting);
 %[text] Make a figure with one set of axes.

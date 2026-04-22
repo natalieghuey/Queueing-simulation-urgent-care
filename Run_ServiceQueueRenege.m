@@ -1,4 +1,4 @@
-%[text] # Run samples of the UrgentCare simulation
+%[text] # Chucktown UrgentCare Simulation with Reneging 
 %[text] Savannah Jellings and Natalie Huey
 %[text] April 22nd 2026
 %[text] Collect statistics and plot histograms along the way.
@@ -7,23 +7,23 @@ mkdir(PictureFolder);
 %%
 %[text] ## Set up
 %[text] We'll measure time in hours
-%[text] Arrival rate: 2 per hour
+%[text] #### Patient arrival rate: 2 per hour
 lambda = 2;
-%[text] Departure (service) rate: 1 per 20 minutes, so 3 per hour
+%[text] #### Departure (service) rate: 1 per 20 minutes, so 3 per hour
 mu = 3;
-%[text] Renege rate: 1 patient reneges every 15min, so 4 per hour
+%[text] #### Renege rate: 1 patient reneges every 15min, so 4 per hour
 theta = 4;
-%[text] Number of doctors:
+%[text] #### Number of doctors:
 s = 1;
-%[text] Run many samples of the queue.
+%[text] Run many samples of the queue:
 NumSamples = 50;
-%[text] Each sample is run up to a maximum time.
+%[text] #### Each sample is run up to a maximum time, for us an 8 hour shift:
 MaxTime = 8;
-%[text] Make a log entry every so often
+%[text] Make a log entry every so often, one per minute:
 LogInterval = 1/60;
 %%
-%[text] ## M/M/1 with reneging
-% Values of Pn
+%[text] ## M/M/1 Values with Reneging
+%[text] #### Values of $P\_n$:
 P0 = 1/hypergeom([1], [mu/theta], lambda/theta);
 nMax = 50;
 P = zeros([nMax+1, 1]);
@@ -31,17 +31,17 @@ P(1) = P0;
 for j = 1:nMax
     P(1+j) = P(j) * lambda / (mu + (j-1)*theta);
 end
-%[text] Part 3.1) The rate balance equation for $P\_n$ in terms of $P\_0$ is $P\_n = \\frac{\\lambda^n}{\\mu(\\mu+\\theta)(\\mu+2\\theta)...(\\mu+(n-1)\\theta)} P\_0$, $n\\geq1$
-% Print out values of P0 to P5 from theory
+%[text] #### Part 3.1) The rate balance equation for $P\_n$ in terms of $P\_0$ is $P\_n = \\frac{\\lambda^n}{\\mu(\\mu+\\theta)(\\mu+2\\theta)...(\\mu+(n-1)\\theta)} P\_0$, $n\\geq1$
+%[text] #### Print out values of $P\_0$ to $P\_5$ from theory:
 for j = 0:5
     fprintf('P_%d = %f\n', j, P(j+1));
 end
 
-% Compute pi_s from theory
+%[text] Compute $\\pi\_s$ from theory:
 pi = mu * (1-P0) / lambda;
-%[text] Part 3.2) I initiated $\\theta=1$ for the following computations:
-%[text] 1\) $P\_0 = 0.455679$, $P\_1=0.303786$, $P\_2=0.151893$, $P\_3=0.060757$, $P\_4=0.020252$, $P\_5=0.005786$. Comparing against the vaules without reneging, $P\_0,P\_1,P\_2$ are all slightly larger but then $P\_3,P\_4,P\_5$ are all slightly smaller. It makes sense for the probability to decrease as the number of customers increases, since longer lines makes it more likely for customers to leave without being served.
-%[text] 2\) The fraction of customers served without reneging is $\\pi\_s=0.8165$.
+%[text] #### Part 3.2) I initiated $\\theta=1$ for the following computations:
+%[text] **1)** $P\_0 = 0.455679$, $P\_1=0.303786$, $P\_2=0.151893$, $P\_3=0.060757$, $P\_4=0.020252$, $P\_5=0.005786$. Comparing against the vaules without reneging, $P\_0,P\_1,P\_2$ are all slightly larger but then $P\_3,P\_4,P\_5$ are all slightly smaller. It makes sense for the probability to decrease as the number of customers increases, since longer lines makes it more likely for customers to leave without being served.
+%[text] **2)** The fraction of customers served without reneging is $\\pi\_s=0.8165$.
 %%
 %[text] ## Run simulation samples
 %[text] This is the most time consuming calculation in the script, so let's put it in its own section.  That way, we can run it once, and more easily run the faster calculations multiple times as we add features to this script.
@@ -71,6 +71,7 @@ end
 %[text] ## Collect measurements of how many customers are in the system
 %[text] Count how many customers are in the system at each log entry for each sample run.  There are two ways to do this.  You only have to do one of them.
 %[text] ### Option one: Use a for loop.
+%[text] #### Compute simulation number of patients in the system:
 NumInSystemSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
@@ -80,25 +81,29 @@ for SampleNum = 1:NumSamples
     % columns like this.
     NumInSystemSamples{SampleNum} = q.Log.NumWaiting + q.Log.NumInService;
 end
-
-% Compute simulation L_q
+%[text] #### Compute number of patients waiting:
 NumWaitingSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
     NumWaitingSamples{SampleNum} = q.Log.NumWaiting;
 end
-
+%[text] #### Compute the count of patients who have been served: 
 CountServed = cell([NumSamples,1]);
 for SampleNum = 1:NumSamples
     q= QSamples{SampleNum};
     CountServed{SampleNum} = numel(q.Served);
 end
-
+%[text] #### Compute the count of patients who reneged:
 CountReneged = cell([NumSamples,1]);
 for SampleNum = 1:NumSamples 
     q = QSamples{SampleNum};
     CountReneged{SampleNum} = numel(q.Reneged);
 end
+%[text] #### Compute $\\pi\_s$ from the simulation samples:
+totalServed = sum(CountServed2);
+totalReneged = sum(cellfun(@(q) numel(q.Reneged), QSamples));
+pi_s_sim = totalServed / (totalServed + totalReneged);
+fprintf("Simulated pi_s: %f\n", pi_s_sim);
 %[text] ### Option two: Map a function over the cell array of ServiceQueue objects.
 %[text] The `@(q) ...` expression is shorthand for a function that takes a `ServiceQueue` as input, names it `q`, and computes the sum of two columns from its log.  The `cellfun` function applies that function to each item in `QSamples`. The option `UniformOutput=false` tells `cellfun` to produce a cell array rather than a numerical array.
 NumInSystemSamples = cellfun( ...
@@ -114,25 +119,19 @@ NumWaiting = vertcat(NumWaitingSamples{:});
 CountServed2 = vertcat(CountServed{:});
 
 CountReneged = vertcat(CountReneged{:});
-
-% simulation pi_s
-totalServed = sum(CountServed2);
-totalReneged = sum(cellfun(@(q) numel(q.Reneged), QSamples));
-pi_s_sim = totalServed / (totalServed + totalReneged);
-fprintf("Simulated pi_s: %f\n", pi_s_sim);
 %[text] MATLAB-ism: When you pull multiple items from a cell array, the result is a "comma-separated list" rather than some kind of array.  Thus, the above means
 %[text] `NumInSystem = vertcat(NumInSystemSamples{1}, NumInSystemSamples{2}, ...)`
 %[text] which concatenates all the columns of numbers in NumInSystemSamples into one long column.
 %[text] This is roughly equivalent to "splatting" in Python, which looks like `f(*args)`.
 %%
 %[text] ## Pictures and stats for number of customers in system
-%[text] Print out mean number of customers in the system.
+%[text] #### Print out mean number of patients in the system:
 meanNumInSystem = mean(NumInSystem);
 fprintf("Mean number in system: %f\n", meanNumInSystem);
-
+%[text] #### Print out mean number of patients waiting: 
 meanNumWaiting = mean(NumWaiting);
 fprintf("Mean number waiting: %f\n", meanNumWaiting);
-
+%[text] #### Print out mean count of customers that reneged:
 meanReneged = mean(CountReneged);
 fprintf("Mean Count of Customers thet Reneged: %f\n",meanReneged);
 %[text] Make a figure with one set of axes.
@@ -142,6 +141,7 @@ ax = nexttile(t);
 %[text] MATLAB-ism: Once you've created a picture, you can use `hold` to cause further plotting functions to work with the same picture rather than create a new one.
 hold(ax, "on");
 %[text] Start with a histogram.  The result is an empirical PDF, that is, the area of the bar at horizontal index n is proportional to the fraction of samples for which there were n customers in the system.  The data for this histogram is counts of customers, which must all be whole numbers.  The option `BinMethod="integers"` means to use bins $(-0.5, 0.5), (0.5, 1.5), \\dots$ so that the height of the first bar is proportional to the count of 0s in the data, the height of the second bar is proportional to the count of 1s, etc. MATLAB can choose bins automatically, but since we know the data consists of whole numbers, it makes sense to specify this option so we get consistent results.
+%[text] ## Histogram of Patients in the System:
 h = histogram(ax, NumInSystem, Normalization="probability", BinMethod="integers");
 %[text] Plot $(0, P\_0), (1, P\_1), \\dots$.  If all goes well, these dots should land close to the tops of the bars of the histogram.
 plot(ax, 0:5, P(1:6), 'o', MarkerEdgeColor='k', MarkerFaceColor='r');
@@ -161,6 +161,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Number in system histogram.svg");
 %%
+%[text] ## Histogram of patients waiting:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -177,6 +178,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram of the number of patients served:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -196,6 +198,7 @@ exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %[text] ## Collect measurements of how long customers spend in the system
 %[text] This is a rather different calculation because instead of looking at log entries for each sample `ServiceQueue`, we'll look at the list of served  customers in each sample `ServiceQueue`.
 %[text] ### Option one: Use a for loop.
+%[text] #### Calculate time patients spend in system:
 TimeInSystemSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
@@ -217,9 +220,7 @@ for SampleNum = 1:NumSamples
     TimeInSystemSamples{SampleNum} = ...
         cellfun(@(c) c.DepartureTime - c.ArrivalTime, q.Served');
 end
-
-
-% Compute simulation W_q
+%[text] #### Calculate the time patients wait:
 TimeWaitingSamples = cell([NumSamples, 1]);
 for SampleNum = 1:NumSamples
     q = QSamples{SampleNum};
@@ -236,10 +237,11 @@ TimeInSystem = vertcat(TimeInSystemSamples{:});
 
 TimeWaiting = vertcat(TimeWaitingSamples{:});
 
+%[text] #### Calculate time patients are served by taking total waiting time and subtracting the time spent waiting:
 TimeServed = TimeInSystem - TimeWaiting;
 %%
 %[text] ## Pictures and stats for time customers spend in the system
-%[text] Print out mean time spent in the system.
+%[text] #### Print out mean time spent in the system and mean time spent waiting:
 meanTimeInSystem = mean(TimeInSystem);
 fprintf("Mean time in system: %f\n", meanTimeInSystem);
 
@@ -250,6 +252,7 @@ fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
 %[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+%[text] ## Histogram for time patients spent in the system:
 h = histogram(ax, TimeInSystem, Normalization="probability", BinWidth=5/60);
 %[text] Add titles and labels and such.
 title(ax, "Time in the system");
@@ -264,6 +267,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram for time paatients spent waiting:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -280,6 +284,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram for time it takes patients to be served:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -296,6 +301,7 @@ pause(2);
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %%
+%[text] ## Histogram for number of patients who reneged:
 fig = figure();
 t = tiledlayout(fig,1,1);
 ax = nexttile(t);
@@ -306,10 +312,10 @@ ylabel(ax, "Probability");
 ylim(ax, [0 0.3]);
 xlim(ax,[-1 15]);
 %%
-%[text] Part 4)
-%[text] 3\) The theoretical values of $P\_0,...,P\_5$ agree pretty well with the simulated values of $P\_0,...,P\_5$. On the histogram, each of the five red dots are very close to the simulation vaules as represented by the blue bars.
-%[text] 5\) From the simulation, we get $L=0.593987$, $L\_q=0.131955$, $W=0.353286$, and $W\_q=0.038248$. We also get the simulated value $\\pi\_s=0.712468$, and the average count of customers that reneged is 4.52.
-%[text] 7\) As one might expect, there are less customers being served in the reneging simulation compared to the baseline simulation. This makes sense, since people are leaving the queue without being served. Time spent waiting is also lower with reneging. Since there are less people waiting to be served, overall patients spend less time waiting. Building off of this, it also makes sense that with reneging the time a patient spends in system is lower overall than without reneging. The time customers spend being served is about the same between the two simulations, which makes sense because the doctor still takes 20 minutes to see a patient. The simulation values from the baseline are $L=1.697$, $L\_q=1.085$, $W=0.732$, and$W\_q=0.419$. The simulation values with reneging are $L=0.593987$, $L\_q=0.131955$, $W=0.353286$, and $W\_q=0.038248$. These values are a lot lower, which makes sense since the number of customers in the system and waiting are lower with reneging, and the time spent in the queue and waiting is also lower with reneging.
+%[text] # Part 4:
+%[text] **3)** The theoretical values of $P\_0,...,P\_5$ agree pretty well with the simulated values of $P\_0,...,P\_5$. On the histogram, each of the five red dots are very close to the simulation vaules as represented by the blue bars.
+%[text] **5)** From the simulation, we get $L=0.593987$, $L\_q=0.131955$, $W=0.353286$, and $W\_q=0.038248$. We also get the simulated value $\\pi\_s=0.712468$, and the average count of customers that reneged is 4.52.
+%[text] **7)** As one might expect, there are less customers being served in the reneging simulation compared to the baseline simulation. This makes sense, since people are leaving the queue without being served. Time spent waiting is also lower with reneging. Since there are less people waiting to be served, overall patients spend less time waiting. Building off of this, it also makes sense that with reneging the time a patient spends in system is lower overall than without reneging. The time customers spend being served is about the same between the two simulations, which makes sense because the doctor still takes 20 minutes to see a patient. The simulation values from the baseline are $L=1.697$, $L\_q=1.085$, $W=0.732$, and$W\_q=0.419$. The simulation values with reneging are $L=0.593987$, $L\_q=0.131955$, $W=0.353286$, and $W\_q=0.038248$. These values are a lot lower, which makes sense since the number of customers in the system and waiting are lower with reneging, and the time spent in the queue and waiting is also lower with reneging.
 
 %[appendix]{"version":"1.0"}
 %---
